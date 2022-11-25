@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
+const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const app = express();
 const port = process.env.PORT || 5000;
@@ -14,8 +15,59 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
 async function run(){
     try{
-        const collection = client.db("boibazar").collection("categories");
+        const categoriesCollection = client.db("boibazar").collection("categories");
+        const userCollection = client.db("boibazar").collection("users");
 
+        //create user
+        app.post('/users', async(req, res)=>{
+            const user = req.body;
+            const result = await userCollection.insertOne(user);
+            res.send(result);
+        });
+
+
+        //create token
+        app.get('/jwt',async (req, res)=>{
+            const email = req.query.email;
+            const query = {email:email}
+            const user = await userCollection.findOne(query);
+            if(user){
+                const token = jwt.sign({email}, process.env.ACCESS_TOKEN, {expiresIn: '2h'}) ;
+                return res.send({accessToken: token})
+            }
+            res.status(403).send({accessToken: ''})
+        });
+
+        //checking for Admin
+        app.get('/users/admin/:email', async(req, res)=>{
+            const email = req.params.email;
+            const query = {email:email};
+            const user = await userCollection.findOne(query);
+            res.send({isAdmin: user?.role === 'Admin'});
+        });
+
+        //checking for seller
+        app.get('/users/seller/:email', async(req, res)=>{
+            const email = req.params.email;
+            const query = {email:email};
+            const user = await userCollection.findOne(query);
+            res.send({isSeller: user?.role === 'Seller'});
+        });
+
+        //checking for buyer
+        app.get('/users/buyer/:email', async(req, res)=>{
+            const email = req.params.email;
+            const query = {email:email};
+            const user = await userCollection.findOne(query);
+            res.send({isBuyer: user?.role === 'buyer'});
+        })
+
+        app.get('/users', async(req, res)=>{
+            const email = req.query.email;
+            const query = {email: email};
+            const user = await userCollection.findOne(query);
+            res.send(user)
+        });
 
     }finally{
 
