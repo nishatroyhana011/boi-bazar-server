@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -38,6 +38,14 @@ async function run(){
             const book = req.body;
             const result = await bookCollection.insertOne(book);
             res.send(result);
+        });
+
+        //get my products
+        app.get('/mybooks', async(req, res)=>{
+            const email = req.query.email;
+            const query = {email:email}
+            const result = await bookCollection.find(query).toArray();
+            res.send(result)
         });
 
         //get categories
@@ -91,7 +99,13 @@ async function run(){
             res.send(user)
         });
 
-        
+        app.delete('/book/:id', async(req, res)=>{
+            const id = req.params.id;
+            const query = {_id: ObjectId(id)}
+            const result = await bookCollection.deleteOne(query);
+            res.send(result)
+        });
+       
 
     }finally{
 
