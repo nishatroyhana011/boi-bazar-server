@@ -18,6 +18,7 @@ async function run(){
         const categoriesCollection = client.db("boibazar").collection("categories");
         const userCollection = client.db("boibazar").collection("users");
         const bookCollection = client.db("boibazar").collection("books");
+        const bookingCollection = client.db("boibazar").collection("bookings");
 
         //create user
         app.post('/users', async(req, res)=>{
@@ -53,6 +54,22 @@ async function run(){
             const query = {};
             const result = await categoriesCollection.find(query).toArray();
             res.send(result)
+        });
+
+        //get category by id
+        app.get('/category/:id', async(req, res)=>{
+            const id = req.params.id;
+            
+            const query = {category:id}
+            const result = await bookCollection.find(query).toArray();
+            res.send(result)
+        });
+
+        //post a booking
+        app.post('/bookings', async(req, res)=>{
+            const product = req.body;
+            const result = await bookingCollection.insertOne(product);
+            res.send(result);
         });
 
         //create token
