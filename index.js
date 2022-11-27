@@ -72,6 +72,14 @@ async function run(){
             res.send(result);
         });
 
+        //get my booked products
+        app.get('/myorders', async(req, res)=>{
+            const email = req.query.email;
+            const query = {email:email}
+            const result = await bookingCollection.find(query).toArray();
+            res.send(result)
+        });
+
         //create token
         app.get('/jwt',async (req, res)=>{
             const email = req.query.email;
@@ -100,14 +108,6 @@ async function run(){
             res.send({isSeller: user?.role === 'Seller'});
         });
 
-        //checking for buyer
-        app.get('/users/buyer/:email', async(req, res)=>{
-            const email = req.params.email;
-            const query = {email:email};
-            const user = await userCollection.findOne(query);
-            res.send({isBuyer: user?.role === 'buyer'});
-        })
-
         //get user by email
         app.get('/users', async(req, res)=>{
             const email = req.query.email;
@@ -121,6 +121,19 @@ async function run(){
             const query = {_id: ObjectId(id)}
             const result = await bookCollection.deleteOne(query);
             res.send(result)
+        });
+
+        //get all users
+        app.get('/allsellers', async(req, res)=>{
+            const query = {};
+            const seller = [];
+            const users = await userCollection.find(query).toArray();
+            users.forEach(user => {
+                if(user.role==='Seller'){
+                     seller.push(user);
+                }
+            })
+            res.send(seller)
         });
        
 
