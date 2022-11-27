@@ -41,6 +41,13 @@ async function run(){
             res.send(result);
         });
 
+        //get all books by advertise
+
+        app.get('/allbooks', async(req, res)=>{
+            const query = {advertise:true, isSold:false};
+            const result = await bookCollection.find(query).toArray();
+            res.send(result);
+        })
         //get my products
         app.get('/mybooks', async(req, res)=>{
             const email = req.query.email;
@@ -162,6 +169,20 @@ async function run(){
             const id = req.params.id;
             const query = {_id: ObjectId(id)}
             const result = await userCollection.deleteOne(query);
+            res.send(result)
+        });
+
+        //advertise
+        app.put('/books/advertise/:id', async (req, res)=>{
+            const id = req.params.id;
+            const filter = {_id: ObjectId(id)}
+            const options = {upsert: true}
+            const updatedBook = {
+                $set: {
+                    advertise: true
+                }
+            }
+            const result = await bookCollection.updateOne(filter, updatedBook, options )
             res.send(result)
         });
 
