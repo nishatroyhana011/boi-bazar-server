@@ -123,7 +123,7 @@ async function run(){
             res.send(result)
         });
 
-        //get all users
+        //get all sellers
         app.get('/allsellers', async(req, res)=>{
             const query = {};
             const seller = [];
@@ -135,7 +135,35 @@ async function run(){
             })
             res.send(seller)
         });
+
+        //get all buyers
+        app.get('/allbuyers', async(req, res)=>{
+            const query = {};
+            const seller = [];
+            const users = await userCollection.find(query).toArray();
+            users.forEach(user => {
+                if(user.role==='Buyer'){
+                     seller.push(user);
+                }
+            })
+            res.send(seller)
+        });
        
+        //seller delete
+        app.delete('/seller/:id', async(req, res)=>{
+            const id = req.params.id;
+            const query = {_id: ObjectId(id)}
+            const result = await userCollection.deleteOne(query);
+            res.send(result)
+        });
+
+        //buyer delete
+        app.delete('/buyer/:id', async(req, res)=>{
+            const id = req.params.id;
+            const query = {_id: ObjectId(id)}
+            const result = await userCollection.deleteOne(query);
+            res.send(result)
+        });
 
     }finally{
 
