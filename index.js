@@ -13,6 +13,22 @@ app.use(express.json())
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.BD_PASSWORD}@cluster0.gipirp7.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
+function verifyJWT(req, res, next){
+    const authHeader = req.headers.authorization;
+    
+    if(!authHeader){
+        return res.status(401).send('token nai')
+    }
+    const token = authHeader.split(' ')[1];
+    
+    jwt.verify(token, process.env.ACCESS_TOKEN, function(err, decoded){
+        if(err){
+            return res.status(403).send('forbidden')
+        }
+        req.decoded = decoded;
+        next();
+    })
+}
 
 async function run(){
     try{
@@ -81,7 +97,7 @@ async function run(){
         });
 
         //get my booked products
-        app.get('/myorders', async(req, res)=>{
+        app.get('/myorders',verifyJWT, async(req, res)=>{
             const email = req.query.email;
             const query = {email:email}
             const result = await bookingCollection.find(query).toArray();
@@ -89,7 +105,7 @@ async function run(){
         });
 
         //create token
-        app.get('/jwt',async (req, res)=>{
+        app.get('/jwt', async (req, res)=>{
             const email = req.query.email;
             const query = {email:email}
             const user = await userCollection.findOne(query);
@@ -186,6 +202,30 @@ async function run(){
             const result = await bookCollection.updateOne(filter, updatedBook, options )
             res.send(result)
         });
+
+        //report to admin
+        app.put('/books/reported/:id', async (req, res)=>{
+            const id = req.params.id;
+            const filter = {_id: ObjectId(id)}
+            const options = {upsert: true}
+            const updatedBook = {
+                $set: {
+                    reported: true
+                }
+            }
+            const result = await bookCollection.updateOne(filter, updatedBook, options )
+            res.send(result)
+        });
+        
+        //get reported items
+        app.get('/books/reported', async (req, res)=>{
+            const query = { reported: true}
+            const result = await bookCollection.find(query).toArray();
+            res.send(result)
+        });
+
+        //delete repoeted items
+        
 
         //get booked product for payment
         app.get('/booked/:id', async (req, res)=>{
