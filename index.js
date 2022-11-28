@@ -216,6 +216,20 @@ async function run(){
             const result = await bookCollection.updateOne(filter, updatedBook, options )
             res.send(result)
         });
+
+        //
+        app.put('/seller/verify/:id', async (req, res)=>{
+            const id = req.params.id;
+            const filter = {_id: ObjectId(id)}
+            const options = {upsert: true}
+            const updateduser = {
+                $set: {
+                    verified: true
+                }
+            }
+            const result = await userCollection.updateOne(filter, updateduser, options )
+            res.send(result)
+        });
         
         //get reported items
         app.get('/books/reported', async (req, res)=>{
@@ -225,7 +239,7 @@ async function run(){
         });
 
         //delete repoeted items
-        
+
 
         //get booked product for payment
         app.get('/booked/:id', async (req, res)=>{
