@@ -3,6 +3,7 @@ const cors = require('cors');
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const stripe = require("stripe")(process.env.STRIPE_SECRET);
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -185,6 +186,60 @@ async function run(){
             const result = await bookCollection.updateOne(filter, updatedBook, options )
             res.send(result)
         });
+
+        //get booked product for payment
+        app.get('/booked/:id', async (req, res)=>{
+            const id = req.params.id;
+            const query = { _id: ObjectId(id)}
+            const result = await bookingCollection.findOne(query)
+            res.send(result)
+        })
+
+        app.post('/create-payment-intent', async(req, res)=>{
+            // const booking =req.body;
+            const price = req.body.price;
+            const amount = price * 100;
+            const paymentIntent = await stripe.paymentIntents.create({
+                currency: 'usd',
+                amount: amount,
+                "payment_method_types":[
+                    "card"
+                ]
+            });
+            res.send({
+                clientSecret: paymentIntent.client_secret,
+            })
+        });
+
+        //dpdate paid products
+        app.post('/payments', async(req, res)=>{
+            const payment = req.body;
+
+            const id = payment.booking;
+            const filter = {_id:ObjectId(id)}
+            const options = {upsert: true}
+            const updatedDoc ={
+                $set:{
+                    paid: true,
+                    transactionId: payment.transactionId
+                }
+            }
+            const updateResult = await bookingCollection.updateOne(filter, updatedDoc, options)
+
+            const productId = payment.productId;
+            const query = {_id:ObjectId(productId)};
+            const option = {upsert: true}
+            const updatedProduct ={
+                $set:{
+                    isSold: true,
+                    advertise: false
+                }
+            }
+            const result = await bookCollection.updateOne(query,updatedProduct, option);
+
+            res.send(updateResult)
+        });
+
 
     }finally{
 
